@@ -166,6 +166,114 @@ app.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
+// Password reset request form
+app.get('/reset', (req, res) => {
+  res.render('reset-request');
+});
+
+// Handle password reset request (send email)
+app.post('/reset', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      req.flash('error_msg', 'No account with that email exists.');
+      return res.redirect('/reset');
+    }
+
+    // Generate reset token
+    const token = crypto.randomBytes(20).toString('hex');
+
+    // Set token and expiration on user
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send email with the reset link
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      to: user.email,
+      from: process.env.GMAIL_USER,
+      subject: 'Password Reset',
+      text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.
+             Please click on the following link, or paste this into your browser to complete the process:
+             http://${req.headers.host}/reset/${token}`
+    };
+
+    transporter.sendMail(mailOptions, (err) => {
+      if (err) {
+        console.log(err);
+        req.flash('error_msg', 'Error sending reset email.');
+        return res.redirect('/reset');
+      }
+      req.flash('success_msg', `An email has been sent to ${user.email} with further instructions.`);
+      res.redirect('/reset');
+    });
+
+  } catch (err) {
+    console.log(err);
+    req.flash('error_msg', 'Error processing password reset request.');
+    res.redirect('/reset');
+  }
+});
+
+// Password reset form (GET /reset/:token)
+app.get('/reset/:token', async (req, res) => {
+  const token = req.params.token;
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      req.flash('error_msg', 'Password reset token is invalid or has expired.');
+      return res.redirect('/reset');
+    }
+
+    res.render('reset', { token });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/reset');
+  }
+});
+
+// Handle new password submission (POST /reset/:token)
+app.post('/reset/:token', async (req, res) => {
+  const token = req.params.token;
+  const { newPassword } = req.body;
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      req.flash('error_msg', 'Password reset token is invalid or has expired.');
+      return res.redirect('/reset');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    req.flash('success_msg', 'Your password has been successfully reset.');
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err);
+    res.redirect('/reset');
+  }
+});
+
 app.get('/dashboard', ensureAuthenticated, (req, res) => {
   res.render('dashboard', { user: req.user });
 });
