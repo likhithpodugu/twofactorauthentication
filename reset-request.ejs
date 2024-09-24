@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Password Reset</title>
+</head>
+<body>
+    <h1>Request Password Reset</h1>
+
+    <% if (error_msg) { %>
+        <p style="color: red;"><%= error_msg %></p>
+    <% } %>
+
+    <% if (success_msg) { %>
+        <p style="color: green;"><%= success_msg %></p>
+    <% } %>
+
+    <form action="/reset" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" name="email" required>
+        <button type="submit">Request Password Reset</button>
+    </form>
+</body>
+</html>

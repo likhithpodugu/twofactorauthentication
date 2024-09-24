@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set up Two-Factor Authentication</title>
+</head>
+<body>
+    <h2>Set up Two-Factor Authentication</h2>
+    <p>Scan this QR code with your authenticator app:</p>
+    <img src="<%= data_url %>" alt="QR Code">
+    <form action="/enable-2fa" method="POST">
+        <input type="text" name="token" placeholder="Enter token" required>
+        <button type="submit">Verify and Enable 2FA</button>
+    </form>
+</body>
+</html>

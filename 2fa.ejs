@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Factor Authentication</title>
+</head>
+<body>
+    <h2>Two-Factor Authentication</h2>
+    
+    <form action="/2fa" method="POST">
+        <div>
+            <label for="token">Enter the 6-digit code from your authenticator app:</label>
+            <input type="text" id="token" name="token" placeholder="000000" required pattern="\d{6}">
+        </div>
+        <button type="submit">Verify</button>
+    </form>
+    <p>
+        If you've lost access to your authenticator app, please contact support.
+    </p>
+</body>
+</html>
